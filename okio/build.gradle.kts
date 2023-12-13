@@ -75,7 +75,7 @@ kotlin {
       dependsOn(hashFunctions)
     }
 
-    val nonWasmTest by creating {
+    val nonWasmWasiTest by creating {
       dependencies {
         implementation(libs.kotlin.time)
         implementation(projects.okioFakefilesystem)
@@ -95,7 +95,7 @@ kotlin {
     }
     val jvmTest by getting {
       kotlin.srcDir("src/jvmTest/hashFunctions")
-      dependsOn(nonWasmTest)
+      dependsOn(nonWasmWasiTest)
       dependencies {
         implementation(libs.test.junit)
         implementation(libs.test.assertj)
@@ -109,7 +109,7 @@ kotlin {
         dependsOn(nonAppleMain)
       }
       val jsTest by getting {
-        dependsOn(nonWasmTest)
+        dependsOn(nonWasmWasiTest)
         dependsOn(nonJvmTest)
       }
     }
@@ -132,12 +132,15 @@ kotlin {
       createSourceSet("nativeTest", parent = commonTest, children = mingwTargets + linuxTargets)
         .also { nativeTest ->
           nativeTest.dependsOn(nonJvmTest)
-          nativeTest.dependsOn(nonWasmTest)
+          nativeTest.dependsOn(nonWasmWasiTest)
           createSourceSet("appleTest", parent = nativeTest, children = appleTargets)
         }
     }
 
     if (kmpWasmEnabled) {
+      val wasmJsTest by getting {}
+      nonWasmWasiTest.dependsOn(wasmJsTest)
+
       createSourceSet("wasmMain", parent = commonMain, children = wasmTargets)
         .also { wasmMain ->
           wasmMain.dependsOn(nonJvmMain)

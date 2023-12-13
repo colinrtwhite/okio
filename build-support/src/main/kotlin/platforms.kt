@@ -20,6 +20,8 @@ import org.gradle.kotlin.dsl.withType
 import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
+import org.jetbrains.kotlin.gradle.targets.js.dsl.ExperimentalWasmDsl
+import org.jetbrains.kotlin.gradle.targets.js.dsl.KotlinJsNodeDsl
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin
 import org.jetbrains.kotlin.gradle.targets.js.testing.KotlinJsTest
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
@@ -119,6 +121,14 @@ fun NamedDomainObjectContainer<KotlinSourceSet>.createSourceSet(
   return result
 }
 
+private val configureNodeJs: KotlinJsNodeDsl.() -> Unit = {
+  testTask {
+    useMocha {
+      timeout = "30s"
+    }
+  }
+}
+
 fun KotlinMultiplatformExtension.configureOrCreateJsPlatforms() {
   js {
     compilations.all {
@@ -128,30 +138,24 @@ fun KotlinMultiplatformExtension.configureOrCreateJsPlatforms() {
         metaInfo = true
       }
     }
-    nodejs {
-      testTask {
-        useMocha {
-          timeout = "30s"
-        }
-      }
-    }
-    browser {
-    }
+    nodejs(configureNodeJs)
+    browser()
   }
 }
 
+@OptIn(ExperimentalWasmDsl::class)
 fun KotlinMultiplatformExtension.configureOrCreateWasmPlatform(
   js: Boolean = true,
   wasi: Boolean = true,
 ) {
   if (js) {
     wasmJs {
-      nodejs()
+      nodejs(configureNodeJs)
     }
   }
   if (wasi) {
     wasmWasi {
-      nodejs()
+      nodejs(configureNodeJs)
     }
   }
 }
